@@ -25,7 +25,16 @@ Adapun kolom yang digunakan:
 ## 2. Design Decisions
 
 ### 2.1 **Severity Scoring:**   
-  Setiap kombinasi `Primary Type` + `Description` diberi bobot keparahan (0--100) melalui skema dua level: (1) skor dasar per `Primary Type` yang mencakup hampir seluruh kategori kejahatan pada dataset (bukan satu nilai default global), dan (2) modifier berbasis kata kunci pada `Description` (mis. `ARMED`/`AGGRAVATED` menaikkan skor, `ATTEMPT` menurunkannya, nominal kerugian finansial menyesuaikan skor kejahatan properti). Skala skor dasar disusun berdasarkan tingkat ancaman terhadap keselamatan publik --- kejahatan terhadap nyawa & tubuh (`HOMICIDE`, `CRIM SEXUAL ASSAULT`, `KIDNAPPING`) diberi bobot tertinggi, sementara pelanggaran administratif/tanpa korban langsung (`LIQUOR LAW VIOLATION`, `GAMBLING`) diberi bobot terendah. Modifier `ARMED`/`FIREARM` menaikkan skor karena risiko cedera fisik lebih tinggi, `ATTEMPT` menurunkan skor karena dampak nyata belum terjadi, dan `DOMESTIC` menaikkan skor karena kejahatan domestik cenderung berulang. Pendekatan ini secara signifikan mengurangi persentase kejadian yang jatuh ke nilai fallback dibanding skema satu-default.
+  Setiap kombinasi `Primary Type` + `Description` diberi bobot keparahan (0--100) melalui skema dua level:   
+  (1) Skor dasar per `Primary Type` yang mencakup hampir seluruh kategori kejahatan pada dataset (bukan satu nilai default global).   
+  (2) Modifier berdasarkan kata kunci pada `Description` :   
+    Skala skor dasar disusun berdasarkan tingkat ancaman terhadap keselamatan publik:   
+    - Kejahatan terhadap nyawa & tubuh (`HOMICIDE`, `CRIM SEXUAL ASSAULT`, `KIDNAPPING`) diberi bobot tertinggi.   
+    - Administratif/tanpa korban langsung (`LIQUOR LAW VIOLATION`, `GAMBLING`) diberi bobot terendah.   
+    - Modifier `ARMED`/`FIREARM` menaikkan skor karena risiko cedera fisik lebih tinggi.   
+    - `ATTEMPT` menurunkan skor karena dampak nyata belum terjadi.   
+    - `DOMESTIC` menaikkan skor karena kejahatan domestik cenderung berulang.  
+    Pendekatan ini secara signifikan mengurangi persentase kejadian yang jatuh ke nilai fallback dibanding skema satu-default.
 
 ### 2.2 **Temporal Relevance:**
   Informasi waktu dimodelkan melalui dua mekanisme:    
