@@ -4,6 +4,7 @@
 
 Task1/dataset/*.csv
 Task1/dataset/*.parquet
+Task2/models/*.joblib
 
 __pycache__/
 *.py[cod]
