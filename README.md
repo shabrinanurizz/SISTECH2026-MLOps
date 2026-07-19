@@ -8,12 +8,11 @@ Repository ini berisi kumpulan **Hands-On Task** dari Mini-Bootcamp **Machine Le
 
 | Task | Topik | Deskripsi Singkat |
 |---|---|---|
-| Task 1 | Data Foundation & Feature Engineering | Membangun dataset fitur + label (Risk Score) dari data mentah Chicago Crimes --- meliputi pembersihan data, EDA, feature engineering temporal & spasial, serta pseudo-labeling |
-| Task 2 | *(menyusul)* | *(deskripsi menyusul)* |
-| Task 3 | *(menyusul)* | *(deskripsi menyusul)* |
+| Task 1 | Data Foundation & Feature Engineering | Exploratory Data Analysis, Feature Engineering (temporal & spasial), Pseudo-Labeling (severity + space-time decay) |
+| Task 2 | Modelling | Baseline & Feature Vector Assembly, Model Training & Evaluation, Continual Learning (drift detection, checkpoint retraining, versioning), Model registry/versioning |
 
 
 ## Catatan
 
-Repository ini bersifat **living document** - akan terus diperbarui seiring bertambahnya task baru pada Mini-Bootcamp MLOps SISTECH 2026.
+Repository ini bersifat **living document** - akan terus diperbarui seiring bertambahnya task.
 ```
