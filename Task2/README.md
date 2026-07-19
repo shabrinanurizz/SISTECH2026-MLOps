@@ -67,11 +67,11 @@ Pola yang sama berulang di Batch 4: PSI masih tinggi (8,65), kandidat makin buru
 
 ## 4. Refleksi: Kendala & Solusi
 
-- **Kendala — tidak ada kolom `Datetime` per-kejadian** di dataset agregat. Simulasi batch tidak bisa merepresentasikan urutan waktu asli.
+- **Kendala — tidak ada kolom `Datetime` per-kejadian** di dataset agregat. Simulasi batch tidak bisa merepresentasikan urutan waktu asli.   
   **Solusi:** batch dibuat dengan pengacakan **terstratifikasi per `cell_id`** (bukan acak polos) agar tiap batch tetap merepresentasikan sebaran ~20-37 ribu sel yang konsisten proporsinya, dan keterbatasan ini didokumentasikan eksplisit — bukan diklaim sebagai simulasi waktu nyata.
 
-- **Kendala — risiko data leakage pada encoding `cell_id`.** Fitur `cell_target_enc` yang justru fitur paling berpengaruh (45% importance) sangat rawan bocor kalau dihitung dari seluruh dataset.
+- **Kendala — risiko data leakage pada encoding `cell_id`.** Fitur `cell_target_enc` yang justru fitur paling berpengaruh (45% importance) sangat rawan bocor kalau dihitung dari seluruh dataset.   
   **Solusi:** `cell_freq_map` dan `cell_target_map` dihitung **hanya dari `train_df`**, dengan fallback ke `global_mean` untuk sel yang belum pernah muncul di training — konsekuensinya, model bisa jadi kurang akurat untuk sel-sel baru yang tidak punya riwayat, sebuah keterbatasan yang perlu diwaspadai kalau dipakai untuk sel yang benar-benar baru muncul di produksi.
 
-- **Kendala — kandidat model runtuh total saat drift ekstrem (R² negatif di Batch 4).** Ini sempat terlihat seperti bug, tapi setelah ditelusuri lewat laporan drift (`PSI` 8,65 untuk `crime_count`), ternyata memang konsekuensi logis dari drift buatan yang sangat agresif (+60% crime_count, +30% risk_score) mendominasi seluruh jendela training 3-batch.
+- **Kendala — kandidat model runtuh total saat drift ekstrem (R² negatif di Batch 4).** Ini sempat terlihat seperti bug, tapi setelah ditelusuri lewat laporan drift (`PSI` 8,65 untuk `crime_count`), ternyata memang konsekuensi logis dari drift buatan yang sangat agresif (+60% crime_count, +30% risk_score) mendominasi seluruh jendela training 3-batch.   
   **Solusi:** bukan diperbaiki dengan mengubah model, melainkan **dibiarkan sebagai temuan valid** dan justru jadi bukti bahwa mekanisme `kept_champion` bekerja sebagaimana mestinya — sesuai arahan notebook bahwa continual learning dinilai dari kejujuran narasi, bukan kesempurnaan angka.
