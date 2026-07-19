@@ -1,4 +1,4 @@
-# Laporan Singkat — Crime Risk Score Prediction & Continual Learning Pipeline
+# Crime Risk Score Prediction & Continual Learning Pipeline
 
 Dataset: `features_labels.csv` dari Hands-On 1, 457.696 baris × 14 kolom (agregat per sel grid × hari × jam). Split train/test: 366.156 / 91.540 baris (±20% holdout, dibekukan sebagai `holdout_df` dan tidak pernah ikut training di seluruh proses continual learning).
 
