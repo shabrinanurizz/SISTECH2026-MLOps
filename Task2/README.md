@@ -11,21 +11,19 @@ Dataset: `features_labels.csv` dari Hands-On 1, 457.696 baris × 14 kolom (agreg
 | Baseline: Rata-rata per Jam+Hari | 3.468 | 4.635 | 0.126 |
 | Baseline: Rata-rata per (Sel, Jam) | 3.630 | 4.916 | 0.017 |
 | Baseline: Rata-rata per (Sel, Hari) | 3.657 | 4.960 | -0.001 |
-| Model: Linear Regression | 3.080 | 4.266 | 0.260 |
-| **Model: Random Forest** | **1.732** | **3.044** | **0.623** |
-| Model: Gradient Boosting | 2.935 | 4.077 | 0.324 |
+| Model: Linear Regression | 3.042 | 4.181 | 0.289 |
+| **Model: Random Forest** | **1.278** | **2.307** | **0.783** |
+| Model: Gradient Boosting | 2.790 | 3.835 | 0.402 |
 
 **Analisis :**
 
 - Baseline terkuat ternyata bukan kombinasi `(Sel, Jam)` atau `(Sel, Hari)` seperti dugaan awal, melainkan **Rata-rata per Sel saja** (MAE 3.275, R² 0.187). Ini indikasi kuat bahwa Risk Score didominasi variasi **antar-lokasi**, bukan variasi jam/hari dalam sel yang sama — begitu kombinasi ditambah jam/hari, data per grup jadi terlalu sparse (banyak kombinasi hanya punya sedikit sampel di train), sehingga baseline itu justru *lebih buruk* daripada baseline per-sel saja (MAE 3.630 dan 3.657, mendekati performa Global Mean).   
 
-- Model Linear Regression (MAE 3.080) hanya sedikit lebih baik dari baseline per-sel — wajar, karena `FEATURE_COLS` dasar (`lat_r`, `lon_r`, waktu siklikal, `crime_count`, dst.) belum menangkap identitas sel spesifik seakurat baseline "rata-rata historis per sel".    
+- Model Linear Regression (MAE 3.042) hanya sedikit lebih baik dari baseline per-sel — wajar, karena `FEATURE_COLS` dasar (`lat_r`, `lon_r`, waktu siklikal, `crime_count`, dst.) belum menangkap identitas sel spesifik seakurat baseline "rata-rata historis per sel".    
 
-- **Random Forest jauh mengungguli semua kandidat lain** (MAE 1.732, R² 0.623) — hampir 2× lebih baik dari baseline terbaik dan dari Linear Regression. Ini terjadi setelah menambahkan fitur `cell_target_enc` (target encoding `cell_id`, dihitung dari `train_df` saja untuk menghindari leakage), yang menurut analisis korelasi (`corr_with_target`) adalah fitur paling berkorelasi dengan `risk_score` (r = 0.619) — jauh di atas fitur lain (`lon_r` r=0.225, `hour_sin` r=-0.194, dst.). `feature_importance_df` dari Random Forest mengonfirmasi hal yang sama: `cell_target_enc` menyumbang **45,2%** dari total importance, diikuti `lat_r` (12,8%) dan `lon_r` (10,9%).    
+- **Random Forest jauh mengungguli semua kandidat lain** (MAE 1.278, R² 0.783) — hampir 2× lebih baik dari baseline terbaik dan dari Linear Regression. Ini terjadi setelah menambahkan fitur `cell_target_enc` (target encoding `cell_id`, dihitung dari `train_df` saja untuk menghindari leakage), yang menurut analisis korelasi (`corr_with_target`) adalah fitur paling berkorelasi dengan `risk_score` (r = 0.619) — jauh di atas fitur lain (`lon_r` r=0.225, `hour_sin` r=-0.194, dst.). `feature_importance_df` dari Random Forest mengonfirmasi hal yang sama: `cell_target_enc` menyumbang **45,2%** dari total importance, diikuti `lat_r` (12,8%) dan `lon_r` (10,9%).    
 
-- Gradient Boosting (MAE 2.935) kalah jauh dari Random Forest dengan hyperparameter default (`n_estimators=300, learning_rate=0.05, max_depth=3`) — kemungkinan *underfit* karena `learning_rate` kecil dan `max_depth` dangkal belum cukup untuk menangkap sinyal kuat dari `cell_target_enc` dalam 300 iterasi; berpotensi membaik dengan tuning lebih lanjut (menaikkan `max_depth` atau `n_estimators`).    
-
-- **Catatan :** karena `cell_target_enc` mendominasi importance, model pada dasarnya belajar mereplikasi baseline "rata-rata historis per sel" secara lebih halus (dengan koreksi dari fitur waktu dan `arrest_rate`/`violent_share`), bukan menemukan pola spasial-temporal yang sepenuhnya baru. Ini konsisten dan masuk akal untuk data kejahatan yang memang sangat terkonsentrasi lokasi (crime hotspots), tapi berarti model kemungkinan akan kesulitan generalisasi ke sel yang **belum pernah muncul di data training** (`cell_target_enc` fallback ke global mean untuk kasus ini).   
+- Gradient Boosting (MAE 2.790) kalah jauh dari Random Forest dengan hyperparameter default (`n_estimators=300, learning_rate=0.05, max_depth=3`) — kemungkinan *underfit* karena `learning_rate` kecil dan `max_depth` dangkal belum cukup untuk menangkap sinyal kuat dari `cell_target_enc` dalam 300 iterasi; berpotensi membaik dengan tuning lebih lanjut (menaikkan `max_depth` atau `n_estimators`).    
 
 
 ## 2. Narasi Continual Learning: Perjalanan Model
@@ -69,9 +67,6 @@ Pola yang sama berulang di Batch 4: PSI masih tinggi (8,65), kandidat makin buru
 
 - **Kendala — tidak ada kolom `Datetime` per-kejadian** di dataset agregat. Simulasi batch tidak bisa merepresentasikan urutan waktu asli.   
   **Solusi:** batch dibuat dengan pengacakan **terstratifikasi per `cell_id`** (bukan acak polos) agar tiap batch tetap merepresentasikan sebaran ~20-37 ribu sel yang konsisten proporsinya, dan keterbatasan ini didokumentasikan eksplisit — bukan diklaim sebagai simulasi waktu nyata.
-
-- **Kendala — risiko data leakage pada encoding `cell_id`.** Fitur `cell_target_enc` yang justru fitur paling berpengaruh (45% importance) sangat rawan bocor kalau dihitung dari seluruh dataset.   
-  **Solusi:** `cell_freq_map` dan `cell_target_map` dihitung **hanya dari `train_df`**, dengan fallback ke `global_mean` untuk sel yang belum pernah muncul di training — konsekuensinya, model bisa jadi kurang akurat untuk sel-sel baru yang tidak punya riwayat, sebuah keterbatasan yang perlu diwaspadai kalau dipakai untuk sel yang benar-benar baru muncul di produksi.
 
 - **Kendala — kandidat model runtuh total saat drift ekstrem (R² negatif di Batch 4).** Ini sempat terlihat seperti bug, tapi setelah ditelusuri lewat laporan drift (`PSI` 8,65 untuk `crime_count`), ternyata memang konsekuensi logis dari drift buatan yang sangat agresif (+60% crime_count, +30% risk_score) mendominasi seluruh jendela training 3-batch.   
   **Solusi:** bukan diperbaiki dengan mengubah model, melainkan **dibiarkan sebagai temuan valid** dan justru jadi bukti bahwa mekanisme `kept_champion` bekerja sebagaimana mestinya — sesuai arahan notebook bahwa continual learning dinilai dari kejujuran narasi, bukan kesempurnaan angka.
